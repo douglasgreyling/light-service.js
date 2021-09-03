@@ -1,0 +1,16 @@
+{
+  "name": "light-service",
+  "version": "1.0.0",
+  "description": "A service object framework for JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "p-each-series": "^3.0.0",
+    "p-pipe": "^4.0.0"
+  },
+  "type": "module"
+}
