@@ -103,16 +103,24 @@ export default class Action {
 
   static __includeHooks(action, steps) {
     if (action.beforeEach) {
-      steps.splice(1, 0, ActionStep.create(action.beforeEach.bind(action)));
+      steps.splice(
+        1,
+        0,
+        ActionStep.create(action, action.beforeEach.bind(action))
+      );
     }
 
     if (action.afterEach) {
-      steps.push(ActionStep.create(action.afterEach.bind(action)));
+      steps.push(ActionStep.create(action, action.afterEach.bind(action)));
     }
 
     if (action.aroundEach) {
-      steps.splice(1, 0, ActionStep.create(action.aroundEach.bind(action)));
-      steps.push(ActionStep.create(action.aroundEach.bind(action)));
+      steps.splice(
+        1,
+        0,
+        ActionStep.create(action, action.aroundEach.bind(action))
+      );
+      steps.push(ActionStep.create(action, action.aroundEach.bind(action)));
     }
   }
 
