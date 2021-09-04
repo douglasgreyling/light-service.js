@@ -12,5 +12,8 @@
     "p-each-series": "^3.0.0",
     "p-pipe": "^4.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "jest": "^27.1.0"
+  }
 }
