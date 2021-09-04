@@ -4,7 +4,7 @@
   "description": "A service object framework for JavaScript",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +14,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^27.1.0"
   }
 }
