@@ -53,16 +53,16 @@ export default class Action {
     this.context.registerAliases(aliases);
   }
 
-  fail(message = undefined, errorCode = undefined) {
-    this.context.fail(message, errorCode);
+  fail(message = undefined, opts = {}) {
+    this.context.fail(message, opts);
   }
 
-  failAndReturn(message = undefined, errorCode = undefined) {
-    this.context.failAndReturn(message, errorCode);
+  failAndReturn(message = undefined, opts = {}) {
+    this.context.failAndReturn(message, opts);
   }
 
-  failWithRollback(message = undefined, errorCode = undefined) {
-    this.context.failWithRollback(message, errorCode);
+  failWithRollback(message = undefined, opts = {}) {
+    this.context.failWithRollback(message, opts);
   }
 
   nextContext() {

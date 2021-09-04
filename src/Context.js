@@ -23,13 +23,13 @@ export default class Context {
     return this.__errorCode;
   }
 
-  fail(message = undefined, errorCode = undefined) {
+  fail(message = undefined, { errorCode = undefined }) {
     if (message) {
       this.__message = message;
     }
 
     if (errorCode) {
-      this.__errorCode = message;
+      this.__errorCode = errorCode;
     }
 
     this.__success = false;
@@ -40,8 +40,8 @@ export default class Context {
     throw new SkipActionError();
   }
 
-  failAndReturn(message, errorCode) {
-    this.fail(message, errorCode);
+  failAndReturn(message, opts) {
+    this.fail(message, opts);
     this.nextContext();
   }
 
@@ -49,8 +49,8 @@ export default class Context {
     this.__skipRemaining = true;
   }
 
-  failWithRollback(message, errorCode) {
-    this.fail(message, errorCode);
+  failWithRollback(message, opts) {
+    this.fail(message, opts);
     this.__rollback = true;
 
     throw new RollbackError();
