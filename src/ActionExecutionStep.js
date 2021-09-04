@@ -1,4 +1,4 @@
-export default class ActionStep {
+export default class ActionExecutionStep {
   static create(action, fn) {
     return async (context) => {
       try {

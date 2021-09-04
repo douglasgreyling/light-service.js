@@ -59,6 +59,8 @@ export default class Context {
   cleanActionContext() {
     delete this.__skipAction;
     delete this.__rollback;
+
+    return this;
   }
 
   cleanOrganizerContext() {
@@ -89,5 +91,9 @@ export default class Context {
 
   currentAction() {
     return this.__currentAction;
+  }
+
+  shouldRollback() {
+    return this.currentOrganizer() !== undefined && this.__rollback;
   }
 }

@@ -1,8 +1,8 @@
 import pEachSeries from "p-each-series";
 
 import Context from "./Context.js";
-import ActionStep from "./ActionStep.js";
-import RollbackActionStep from "./RollbackActionStep.js";
+import ActionExecutionStep from "./ActionExecutionStep.js";
+import ActionRollbackStep from "./ActionRollbackStep.js";
 import ExpectedKeysNotInContextError from "./errors/ExpectedKeysNotInContextError.js";
 import PromisedKeysNotInContextError from "./errors/PromisedKeysNotInContextError.js";
 import RollbackError from "./errors/RollbackError.js";
@@ -11,38 +11,23 @@ export default class Action {
   static async execute(context = {}, aliases = {}) {
     const action = new this(context, aliases);
 
-    const steps = [
-      ActionStep.create(action, action.__setDefaultExpectations.bind(action)),
-      ActionStep.create(action, action.__checkExpectations.bind(action)),
-      ActionStep.create(action, action.executed.bind(action)),
-      ActionStep.create(action, action.__checkPromises.bind(action)),
-    ];
-
-    this.__includeHooks(action, steps);
+    const steps = this.__generateExecuteSteps(action);
 
     await pEachSeries(steps, async (step) => step(action.context));
 
-    this.__triggerOrganizerRollbackIfNecessary(action);
+    if (action.shouldRollback()) this.__triggerOrganizerRollback(action);
 
-    action.cleanContext();
-
-    return action.context;
+    return action.cleanContext();
   }
 
   static async rollBack(context = {}, aliases = {}) {
     const action = new this(context, aliases);
 
-    const steps = [];
-
-    if (action.rolledBack) {
-      steps.push(RollbackActionStep.create(action.rolledBack.bind(action)));
-    }
+    const steps = this.__generateRollbackSteps(action);
 
     await pEachSeries(steps, async (step) => step(action.context));
 
-    action.cleanContext();
-
-    return action.context;
+    return action.cleanContext();
   }
 
   constructor(context = {}, aliases = {}) {
@@ -74,54 +59,51 @@ export default class Action {
   }
 
   cleanContext() {
-    this.context.cleanActionContext();
+    return this.context.cleanActionContext();
   }
 
-  async __setDefaultExpectations() {
-    if (this.expects.constructor.name == "Array") {
-      return;
-    }
-
-    const fields = this.expects.fields;
-
-    if (this.expects.defaults) {
-      await pEachSeries(fields, async (f) => {
-        if (f in this.expects.defaults && f in this.context === false) {
-          let fieldDefault = this.expects.defaults[f];
-
-          if (typeof fieldDefault === "function") {
-            fieldDefault = await fieldDefault(this.context);
-          }
-
-          this.context[f] = fieldDefault;
-        }
-      });
-    }
-
-    this.expects = fields;
+  shouldRollback() {
+    return this.context.shouldRollback();
   }
 
-  static __includeHooks(action, steps) {
-    if (action.beforeEach) {
-      steps.splice(
-        1,
-        0,
-        ActionStep.create(action, action.beforeEach.bind(action))
-      );
-    }
+  // private
 
-    if (action.afterEach) {
-      steps.push(ActionStep.create(action, action.afterEach.bind(action)));
-    }
+  static __generateExecuteSteps(action) {
+    let steps = [
+      action.__setDefaultExpectations,
+      action.__checkExpectations,
+      action.executed,
+      action.__checkPromises,
+    ];
+
+    steps = this.__includeHooks([...steps], action);
+
+    return steps.map((s) => ActionExecutionStep.create(action, s.bind(action)));
+  }
+
+  static __includeHooks(steps, action) {
+    if (action.beforeEach) steps.splice(1, 0, action.beforeEach);
+
+    if (action.afterEach) steps.push(action.afterEach);
 
     if (action.aroundEach) {
-      steps.splice(
-        1,
-        0,
-        ActionStep.create(action, action.aroundEach.bind(action))
-      );
-      steps.push(ActionStep.create(action, action.aroundEach.bind(action)));
+      steps.splice(1, 0, action.aroundEach);
+      steps.push(action.aroundEach);
     }
+
+    return steps;
+  }
+
+  static __generateRollbackSteps(action) {
+    let steps = [];
+
+    if (action.rolledBack) steps.push(action.rolledBack.bind(action));
+
+    return steps.map((s) => ActionRollbackStep.create(s.bind(action)));
+  }
+
+  static __triggerOrganizerRollback(action) {
+    throw new RollbackError(action);
   }
 
   __buildContext(context) {
@@ -130,40 +112,40 @@ export default class Action {
       : new Context(context);
   }
 
-  __checkExpectations() {
-    let missingExpectations = [];
+  async __setDefaultExpectations() {
+    if (this.expects.constructor.name == "Array") return;
 
-    this.expects.forEach((expect) => {
-      if (expect in this.context === false) {
-        missingExpectations.push(expect);
+    const fields = this.expects.fields;
+    const defaults = Object.entries(this.expects.defaults || {});
+
+    await pEachSeries(defaults, async ([dfName, dValue]) => {
+      if (fields.includes(dfName) && dfName in this.context === false) {
+        if (typeof dValue === "function") {
+          dValue = await dValue(this.context);
+        }
+
+        this.context[dfName] = dValue;
       }
     });
 
-    if (0 < missingExpectations.length) {
+    this.expects = fields;
+  }
+
+  __checkExpectations() {
+    const missingExpectations = this.expects.filter(
+      (expect) => expect in this.context === false
+    );
+
+    if (0 < missingExpectations.length)
       throw new ExpectedKeysNotInContextError(missingExpectations);
-    }
   }
 
   __checkPromises() {
-    let missingPromises = [];
+    const missingPromises = this.promises.filter(
+      (promise) => promise in this.context === false
+    );
 
-    this.promises.forEach((promise) => {
-      if (promise in this.context === false) {
-        missingPromises.push(promise);
-      }
-    });
-
-    if (0 < missingPromises.length) {
+    if (0 < missingPromises.length)
       throw new PromisedKeysNotInContextError(missingPromises);
-    }
-  }
-
-  static __triggerOrganizerRollbackIfNecessary(action) {
-    if (
-      action.context.currentOrganizer() !== undefined &&
-      action.context.__rollback
-    ) {
-      throw new RollbackError(action);
-    }
   }
 }
