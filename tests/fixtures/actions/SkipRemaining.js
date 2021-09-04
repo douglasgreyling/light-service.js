@@ -1,14 +1,11 @@
 import Action from "../../../src/Action.js";
 
-export default class Valid extends Action {
+export default class SkipRemaining extends Action {
   expects = ["number"];
   promises = ["number"];
 
   executed({ number }) {
     this.context.number = number + 1;
-  }
-
-  rolledBack({ number }) {
-    this.context.number = number - 1;
+    this.skipRemaining();
   }
 }
