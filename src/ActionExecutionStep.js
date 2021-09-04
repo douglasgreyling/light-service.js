@@ -2,13 +2,7 @@ export default class ActionExecutionStep {
   static create(action, fn) {
     return async (context) => {
       try {
-        if (
-          context.success() &&
-          !context.__skipAction &&
-          !context.__skipRemaining &&
-          !context.__rollback
-        )
-          await fn(context);
+        if (this.shouldExecuteStep(context)) await fn(context);
       } catch (err) {
         switch (err.constructor.name) {
           case "SkipActionError":
@@ -21,5 +15,14 @@ export default class ActionExecutionStep {
         }
       }
     };
+  }
+
+  static shouldExecuteStep(context) {
+    return (
+      context.success() &&
+      !context.__skipAction &&
+      !context.__skipRemaining &&
+      !context.__rollback
+    );
   }
 }
