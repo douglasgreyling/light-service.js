@@ -47,13 +47,13 @@ What do you think of this code?
 ```javascript
 class TaxController extends SomeController {
   update(request, response) {
-    let order = Order.find(request.id);
-    let taxRanges = TaxRange.forRegion(order.region);
+    const order = Order.find(request.id);
+    const taxRanges = TaxRange.forRegion(order.region);
 
     if (taxRanges === undefined)
       return ...; // render some view
 
-    let taxPercentage = taxRanges.forTotal(order.total);
+    const taxPercentage = taxRanges.forTotal(order.total);
 
     if (taxRanges === undefined)
       return ...; // render some other view
@@ -178,7 +178,7 @@ class GreetsAndFeedsSomeone extends Organizer {
   }
 }
 
-const result = GreetsAndFeedsSomeone.call({ name: "Shaggy" });
+const result = await GreetsAndFeedsSomeone.call({ name: "Shaggy" });
 ```
 
 And that's your first organizer! It ties two actions together through a static function `call`. The organizer call function takes any name and uses it to setup an initial context (this is what the `with` function does). The organizer then executes each of the actions on after another with the `reduce` function.
@@ -188,7 +188,7 @@ As your actions are executed they will add/remove to the context you initially s
 Just like actions, organizers return the final context as their return value.
 
 ```javascript
-const result = GreetsAndFeedsSomeone.call({ name: 'Shaggy' });
+const result = await GreetsAndFeedsSomeone.call({ name: 'Shaggy' });
 
 if (result.success()) {
   console.log('Time to stock up on snacks!');
@@ -450,7 +450,7 @@ class FooAction extends Action {
 The context allows you to convert itself to an array:
 
 ```javascript
-const result = GreetsSomeoneAction.execute({ name: "Scooby" });
+const result = await GreetsSomeoneAction.execute({ name: "Scooby" });
 
 console.log(result.toArray());
 ```
@@ -534,7 +534,7 @@ class SomeAction extends Action {
 If this action were executed, then you can pull the error message like you would normally, but you can also retrieve the error code.
 
 ```javascript
-const result = SomeAction.execute();
+const result = await SomeAction.execute();
 
 console.log(result.message());
 > "The teapost is not hot enough"
@@ -565,8 +565,8 @@ You need to call the `failWithRollback` function to initiate a rollback for acti
 
 ```javascript
 class CallSomeExternalAPI extends Action {
-  executed(context) {
-    const apiCallResult = SomeAPI.saveUser(context.user);
+  async executed(context) {
+    const apiCallResult = await SomeAPI.saveUser(context.user);
 
     if (apiCallResult.failure())
       context.failWithRollback("Error when calling external API");
