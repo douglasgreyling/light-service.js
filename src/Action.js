@@ -160,7 +160,7 @@ export default class Action {
 
   static __triggerOrganizerRollbackIfNecessary(action) {
     if (
-      action.context.currentOrganizer !== undefined &&
+      action.context.currentOrganizer() !== undefined &&
       action.context.__rollback
     ) {
       throw new RollbackError(action);

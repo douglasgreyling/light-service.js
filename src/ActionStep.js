@@ -14,7 +14,7 @@ export default class ActionStep {
           case "SkipActionError":
             break;
           case "RollbackError":
-            action.rolledBack(context);
+            if (action.rolledBack) action.rolledBack(context);
             break;
           default:
             throw err;
