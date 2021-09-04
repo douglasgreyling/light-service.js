@@ -1,6 +1,14 @@
 import SkipActionError from "./errors/SkipActionError.js";
 import RollbackError from "./errors/RollbackError.js";
 
+export const CLEANABLE_ACTION_CONTEXT_KEYS = ["__skipAction", "__rollback"];
+export const CLEANABLE_ORGANIZER_CONTEXT_KEYS = [
+  "__skipRemaining",
+  "__rollback",
+  "__currentOrganizer",
+  "__currentAction",
+];
+
 export default class Context {
   constructor(args) {
     this.__success = true;
@@ -19,11 +27,23 @@ export default class Context {
     return this.__message;
   }
 
+  currentOrganizer() {
+    return this.__currentOrganizer;
+  }
+
+  currentAction() {
+    return this.__currentAction;
+  }
+
   errorCode() {
     return this.__errorCode;
   }
 
-  fail(message = undefined, { errorCode = undefined }) {
+  shouldRollback() {
+    return this.currentOrganizer() !== undefined && this.__rollback;
+  }
+
+  fail(message = undefined, { errorCode = undefined } = {}) {
     if (message) {
       this.__message = message;
     }
@@ -57,43 +77,34 @@ export default class Context {
   }
 
   cleanActionContext() {
-    delete this.__skipAction;
-    delete this.__rollback;
+    CLEANABLE_ACTION_CONTEXT_KEYS.forEach((key) => delete this[key]);
 
     return this;
   }
 
   cleanOrganizerContext() {
-    delete this.__skipRemaining;
-    delete this.__rollback;
-    delete this.__currentOrganizer;
-    delete this.__currentAction;
+    CLEANABLE_ORGANIZER_CONTEXT_KEYS.forEach((key) => delete this[key]);
+
+    return this;
   }
 
   registerAliases(aliases) {
-    for (const actualKey in aliases) {
-      Object.defineProperty(this, aliases[actualKey], {
-        enumerable: true,
-        configurable: true,
-        get() {
-          return this[actualKey];
-        },
-        set(value) {
-          this[actualKey] = value;
-        },
-      });
-    }
+    for (const [actualKey, aliasKey] of Object.entries(aliases))
+      this.__mapAlias(actualKey, aliasKey);
   }
 
-  currentOrganizer() {
-    return this.__currentOrganizer;
-  }
+  // private
 
-  currentAction() {
-    return this.__currentAction;
-  }
-
-  shouldRollback() {
-    return this.currentOrganizer() !== undefined && this.__rollback;
+  __mapAlias(actualKey, aliasKey) {
+    Object.defineProperty(this, aliasKey, {
+      enumerable: true,
+      configurable: true,
+      get() {
+        return this[actualKey];
+      },
+      set(value) {
+        this[actualKey] = value;
+      },
+    });
   }
 }
