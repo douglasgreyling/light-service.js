@@ -1,7 +1,7 @@
 import pPipe from "p-pipe";
 
 export default class Organizer {
-  static with(context) {
+  static with(context = {}) {
     return new this(context);
   }
 
@@ -16,12 +16,10 @@ export default class Organizer {
     try {
       this.context = await pipeline(this.context);
     } catch (err) {
-      switch (err.constructor.name) {
-        case "RollbackError":
-          await this.reduceRollback(actions, err.action);
-          break;
-        default:
-          throw err;
+      if (err.constructor.name === "RollbackError") {
+        await this.reduceRollback(actions, err.action);
+      } else {
+        throw err;
       }
     }
 
