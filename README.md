@@ -16,7 +16,6 @@ Be sure to check out the original [LightService](https://github.com/adomokos/lig
 - [Why LightService?](#why-lightservice)
 - [How LightService works in 60 seconds](#how-lightservice-works-in-60-seconds)
 - [Getting started](#getting-started)
-  - [Requirements](#requirements)
   - [Installation](#installation)
   - [Your first action](#your-first-action)
   - [Your first organizer](#your-first-organizer)
@@ -104,6 +103,8 @@ Here's a diagram to understand the relationship between organizers and actions:
 ![LightService](resources/lightservice-interaction.png)
 
 ## Getting started:
+
+### Installation
 
 npm i @douglasgreyling/light-service
 
