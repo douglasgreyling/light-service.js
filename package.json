@@ -3,18 +3,30 @@
   "version": "1.0.0",
   "description": "A service object framework for JavaScript",
   "main": "index.js",
-  "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+  "directories": {
+    "test": "tests"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "p-each-series": "^3.0.0",
     "p-pipe": "^4.0.0"
   },
-  "type": "module",
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^27.1.0"
-  }
+  },
+  "scripts": {
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/douglasgreyling/light-service.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/douglasgreyling/light-service.js/issues"
+  },
+  "homepage": "https://github.com/douglasgreyling/light-service.js#readme",
+  "type": "module",
+  "keywords": []
 }
