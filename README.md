@@ -26,6 +26,7 @@ Be sure to check out the original [LightService](https://github.com/adomokos/lig
   - [Calculating the order tax](#calculating-the-order-tax)
   - [Providing free shipping (where applicable)](<#providing-free-shipping-(where-applicable)>)
   - [And finally, the controller](#and-finally-the-controller)
+- [Caveats](#caveats)
 - [Tips & Tricks](#tips-&-tricks)
   - [Stopping a series of actions](#stopping-a-series-of-actions)
   - [Hooks](#hooks)
@@ -58,7 +59,10 @@ class TaxController extends SomeController {
     if (taxRanges === undefined)
       return ...; // render some other view
 
-    order.tax = order.total.toFixed(2);
+    order.tax = (
+      context.order.total *
+      (context.taxPercentage / 100)
+    ).toFixed(2);;
 
     if (200 < order.totalWithTax)
       order.provideFreeShipping();
@@ -178,7 +182,7 @@ class GreetsAndFeedsSomeone extends Organizer {
   }
 }
 
-const result = await GreetsAndFeedsSomeone.call({ name: "Shaggy" });
+const result = await GreetsAndFeedsSomeone.call("Shaggy");
 ```
 
 And that's your first organizer! It ties two actions together through a static function `call`. The organizer call function takes any name and uses it to setup an initial context (this is what the `with` function does). The organizer then executes each of the actions on after another with the `reduce` function.
@@ -188,7 +192,7 @@ As your actions are executed they will add/remove to the context you initially s
 Just like actions, organizers return the final context as their return value.
 
 ```javascript
-const result = await GreetsAndFeedsSomeone.call({ name: 'Shaggy' });
+const result = await GreetsAndFeedsSomeone.call("Shaggy");
 
 if (result.success()) {
   console.log('Time to stock up on snacks!');
@@ -213,7 +217,7 @@ We'll begin by looking at the controller. We want to look for distinct steps whi
 
 ```javascript
 class CalculatesTax extends Organizer {
-  static call(order) {
+  static async call(order) {
     return this.with({ order }).reduce(
       LooksUpTaxPercentageAction,
       CalculatesOrderTaxAction,
@@ -260,7 +264,10 @@ class CalculatesOrderTaxAction extends Action {
   expects = ["order", "taxPercentage"];
 
   executed(context) {
-    context.order.tax = order.total.toFixed(2);
+    context.order.tax = (
+      context.order.total *
+      (context.taxPercentage / 100)
+    ).toFixed(2);
   }
 }
 ```
@@ -272,7 +279,7 @@ class ProvidesFreeShippingAction extends Action {
   expects = ["order"];
 
   executed(context) {
-    const totalWithTax = context.order.totalWithTax;
+    const totalWithTax = context.order.totalWithTax();
 
     if (200 < totalWithTax) {
       context.order.provideFreeShipping();
@@ -285,10 +292,10 @@ class ProvidesFreeShippingAction extends Action {
 
 ```javascript
 class TaxController extends Controller {
-  update(request, response) {
+  async update(request, response) {
     const order = Order.find(request.id);
 
-    const result = CalculatesTax.call(order);
+    const result = await CalculatesTax.call(order);
 
     if (result.failure()) {
       return ...; // render some view
@@ -298,6 +305,14 @@ class TaxController extends Controller {
   }
 }
 ```
+
+## Caveats:
+
+LightService is really useful when you need to put together a series of functions in order create an elegant processing pipeline. Javascript will make this a little more challenging given that it implements asynchronous code.
+
+This implementation of LightService assumes that asynchronous code is present in your actions & organizers (even if it isn't) in order to sequentially execute action.
+
+Because of this your an actions/organizers will **ALWAYS** return a promise.
 
 ## Tips & Tricks:
 
@@ -312,7 +327,7 @@ However, sometimes not everything will play out as you expect it. An external AP
 
 #### Failing the context:
 
-When something goes wrong in an action and you want to halt the chain, you need to call `fail()` on the context object. This will push the context in a failure state (`context.failure()` will evalute to true). The context's `fail` function can take an optional message argument, this message might help describe what went wrong. In case you need to return immediately from the point of failure, you have to do that by calling next context.
+When something goes wrong in an action and you want to halt the chain, you need to call `fail()` on the context object. This will push the context in a failure state (`context.failure()` will evaluate to true). The context's `fail` function can take an optional message argument, this message might help describe what went wrong. In case you need to return immediately from the point of failure, you have to do that by calling next context.
 
 In case you want to fail the context and stop the execution of the executed block, use the `failAndReturn('something went wrong')` function. This will immediately fail the context and cause the execute function to return.
 
@@ -363,7 +378,7 @@ Consider this code:
 
 ```javascript
 class SomeOrganizer extends Organizer {
-  static call(context) {
+  static async call(context) {
     return this.with(context).reduce(...this.actions());
   }
 
@@ -410,7 +425,7 @@ class SomeOrganizer extends Organizer {
     context.logger.info("admin is about to do (or already has done) something");
   }
 
-  static call(context) {
+  static async call(context) {
     return this.with(context).reduce(...this.actions());
   }
 
@@ -445,25 +460,45 @@ class FooAction extends Action {
 }
 ```
 
-### Context
-
-The context allows you to convert itself to an array:
+Expects can also be an object. This allows you to pass additional arguments like default values:
 
 ```javascript
-const result = await GreetsSomeoneAction.execute({ name: "Scooby" });
+class FooAction extends Action {
+  expects = { fields: ["a", "b"], defaults: { a: 1 } };
+  promises = ["c"];
 
-console.log(result.toArray());
+  executed(context) {
+    context.c = context.a + context.b;
+  }
+}
 ```
 
-This will convert all of the key-values inside the context to an array. Optionally you can also pass true as the first arguement to the `toArray` function to have the context metadata included.
+The default will only be set if the expected field is undefined within the context.
 
-The context also allows you to query metadata kept inside the context:
+Acceptable defaults also include functions.
+
+### Context
+
+The context returned by actions & organizers include some handy helper functions such as the following:
 
 1. The current action (`context.currentAction();`)
 2. The current organizer (`context.currentOrganizer();`)
 3. The failure status of the context (`context.failure();`)
 4. The success status of the context (`context.success();`)
 5. The failure message if it exists (`context.message();`)
+
+Also, take advantage of destructuring as much as possible. You can still refer to and mutate the context via `this` like the following:
+
+```javascript
+class FooAction extends Action {
+  expects = ["a", "b"];
+  promises = ["c"];
+
+  executed({ a, b }) {
+    this.context.c = a + b;
+  }
+}
+```
 
 ### Key aliases
 
@@ -479,7 +514,7 @@ Say for example you have actions `AnAction` and `AnotherAction` that you've used
 class AnOrganizer extends Organizer {
   aliases = { myKey: "keyAlias" };
 
-  static call(order) {
+  static async call(order) {
     return this.with({ order }).reduce(AnAction, AnotherAction);
   }
 }
@@ -578,7 +613,7 @@ Using the `rolledBack` function is optional for the actions in the chain. You sh
 
 The actions are rolled back in reversed order from the point of failure starting with the action that triggered it.
 
-### Orchestrator logic
+<!-- ### Orchestrator logic
 
 The Organizer - Action combination works really well for simple use cases. However, as business logic gets more complex, or when LightService is used in an ETL workflow, the code that routes the different organizers becomes very complex and imperative.
 
@@ -763,7 +798,7 @@ class AddToContextOrganizer {
 }
 ```
 
-In this case the organizer above adds some kv's into the context which the `AddsOneAction` needs in order to function correctly.
+In this case the organizer above adds some kv's into the context which the `AddsOneAction` needs in order to function correctly. -->
 
 ## Contributing
 
