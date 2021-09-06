@@ -28,5 +28,11 @@
   },
   "homepage": "https://github.com/douglasgreyling/light-service.js#readme",
   "type": "module",
-  "keywords": []
+  "keywords": [
+    "service",
+    "services",
+    "service-objects",
+    "lightservice",
+    "light-service"
+  ]
 }
