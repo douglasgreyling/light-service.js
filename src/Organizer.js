@@ -36,6 +36,18 @@ export default class Organizer {
     this.context = await pipeline(failedAction.context);
   }
 
+  getHooks() {
+    let hooks = {};
+
+    if (this.beforeEach) hooks.beforeEach = this.beforeEach;
+    if (this.afterEach) hooks.afterEach = this.afterEach;
+    if (this.aroundEach) hooks.aroundEach = this.aroundEach;
+
+    return hooks;
+  }
+
+  // private
+
   static __executeFns(actions, organizer) {
     return actions.map((action) => async (ctx) => {
       let organizerContextMetadata = {
@@ -43,10 +55,10 @@ export default class Organizer {
         __currentAction: action.name,
       };
 
-      return action.execute(
-        Object.assign(ctx, organizerContextMetadata),
-        organizer.aliases
-      );
+      return action.execute(Object.assign(ctx, organizerContextMetadata), {
+        aliases: organizer.aliases,
+        hooks: organizer.getHooks(),
+      });
     });
   }
 

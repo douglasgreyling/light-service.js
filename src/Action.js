@@ -8,8 +8,8 @@ import PromisedKeysNotInContextError from "./errors/PromisedKeysNotInContextErro
 import RollbackError from "./errors/RollbackError.js";
 
 export default class Action {
-  static async execute(context = {}, aliases = {}) {
-    const action = new this(context, aliases);
+  static async execute(context = {}, opts = {}) {
+    const action = new this(context, opts);
 
     const steps = this.__generateExecuteSteps(action);
 
@@ -30,10 +30,11 @@ export default class Action {
     return action.cleanContext();
   }
 
-  constructor(context = {}, aliases = {}) {
+  constructor(context = {}, { aliases = {}, hooks = {} }) {
     this.context = this.__buildContext(context);
     this.expects = [];
     this.promises = [];
+    this.hooks = hooks;
 
     this.context.registerAliases(aliases);
   }
@@ -76,22 +77,20 @@ export default class Action {
       action.__checkPromises,
     ];
 
-    steps = this.__includeHooks([...steps], action);
+    this.__setHooks(steps, action);
 
     return steps.map((s) => ActionExecutionStep.create(action, s.bind(action)));
   }
 
-  static __includeHooks(steps, action) {
-    if (action.beforeEach) steps.splice(1, 0, action.beforeEach);
+  static __setHooks(steps, { hooks = {} }) {
+    if (hooks.beforeEach) steps.splice(1, 0, hooks.beforeEach);
 
-    if (action.afterEach) steps.push(action.afterEach);
+    if (hooks.afterEach) steps.push(hooks.afterEach);
 
-    if (action.aroundEach) {
-      steps.splice(1, 0, action.aroundEach);
-      steps.push(action.aroundEach);
+    if (hooks.aroundEach) {
+      steps.splice(1, 0, hooks.aroundEach);
+      steps.push(hooks.aroundEach);
     }
-
-    return steps;
   }
 
   static __generateRollbackSteps(action) {

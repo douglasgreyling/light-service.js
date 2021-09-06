@@ -1,12 +1,16 @@
-import Valid from "../../fixtures/organizer/Valid.js";
-import SkipActions from "../../fixtures/organizer/SkipActions.js";
-import FailContext from "../../fixtures/organizer/FailContext.js";
-import FailContextAndReturns from "../../fixtures/organizer/FailContextAndReturns.js";
-import SkipRemaining from "../../fixtures/organizer/SkipRemaining.js";
-import Rollback from "../../fixtures/organizer/Rollback.js";
-import RollbackWithNoHandler from "../../fixtures/organizer/RollbackWithNoHandler.js";
-import OrganizerMetadata from "../../fixtures/organizer/OrganizerMetadata.js";
-import Alias from "../../fixtures/organizer/Alias.js";
+import Valid from "../../fixtures/organizers/Valid.js";
+import SkipActions from "../../fixtures/organizers/SkipActions.js";
+import FailContext from "../../fixtures/organizers/FailContext.js";
+import FailContextAndReturns from "../../fixtures/organizers/FailContextAndReturns.js";
+import SkipRemaining from "../../fixtures/organizers/SkipRemaining.js";
+import Rollback from "../../fixtures/organizers/Rollback.js";
+import RollbackWithNoHandler from "../../fixtures/organizers/RollbackWithNoHandler.js";
+import OrganizerMetadata from "../../fixtures/organizers/OrganizerMetadata.js";
+import Alias from "../../fixtures/organizers/Alias.js";
+import AroundHooks from "../../fixtures/organizers/AroundHooks.js";
+import BeforeHooks from "../../fixtures/organizers/BeforeHooks.js";
+import AfterHooks from "../../fixtures/organizers/AfterHooks.js";
+import AllHooks from "../../fixtures/organizers/AllHooks.js";
 
 test("executes valids actions", async () => {
   const result = await Valid.call(1);
@@ -62,4 +66,34 @@ test("registers aliases for actions to use", async () => {
   const result = await Alias.call(1);
 
   expect(result.number).toEqual(3);
+});
+
+test("executes around hook before and after executed step", async () => {
+  const result = await AroundHooks.call([]);
+
+  expect(result.order).toEqual(["around", "executed", "around"]);
+});
+
+test("executes before hook before executed step", async () => {
+  const result = await BeforeHooks.call([]);
+
+  expect(result.order).toEqual(["before", "executed"]);
+});
+
+test("executes after hook after executed step", async () => {
+  const result = await AfterHooks.call([]);
+
+  expect(result.order).toEqual(["executed", "after"]);
+});
+
+test("executes all hooks in the correct order", async () => {
+  const result = await AllHooks.call([]);
+
+  expect(result.order).toEqual([
+    "around",
+    "before",
+    "executed",
+    "after",
+    "around",
+  ]);
 });
