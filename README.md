@@ -105,17 +105,7 @@ Here's a diagram to understand the relationship between organizers and actions:
 
 ## Getting started:
 
-TODO
-
-<!-- ### Requirements:
-
-PHP 7.3+ is required 😅
-
-### Installation:
-
-```
-composer require douglasgreyling/light-service
-``` -->
+npm i @douglasgreyling/light-service
 
 ### Your first action:
 
