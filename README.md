@@ -106,7 +106,9 @@ Here's a diagram to understand the relationship between organizers and actions:
 
 ### Installation
 
+```
 npm i @douglasgreyling/light-service
+```
 
 ### Your first action:
 
