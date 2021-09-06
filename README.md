@@ -59,7 +59,7 @@ class TaxController extends SomeController {
     order.tax = (
       context.order.total *
       (context.taxPercentage / 100)
-    ).toFixed(2);;
+    ).toFixed(2);
 
     if (200 < order.totalWithTax)
       order.provideFreeShipping();
