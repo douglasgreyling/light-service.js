@@ -1,9 +1,9 @@
 # LightService
 
-<!-- ![Packagist Version](https://img.shields.io/packagist/v/douglasgreyling/light-service)
-[![build Actions Status](https://github.com/douglasgreyling/light-service/workflows/build/badge.svg)](https://github.com/douglasgreyling/light-service/actions)
-[![codecov](https://codecov.io/gh/douglasgreyling/light-service/branch/main/graph/badge.svg?token=6KV6XMO36Z)](undefined)
-![Packagist License](https://img.shields.io/packagist/l/douglasgreyling/light-service) -->
+![NPM Version](https://img.shields.io/npm/v/@douglasgreyling/light-service)
+[![build Actions Status](https://github.com/douglasgreyling/light-service.js/workflows/build/badge.svg)](https://github.com/douglasgreyling/light-service.js/actions)
+[![codecov](https://codecov.io/gh/douglasgreyling/light-service.js/branch/main/graph/badge.svg?token=LN2G57L77T)](https://codecov.io/gh/douglasgreyling/light-service.js)
+![NPM License](https://img.shields.io/npm/l/@douglasgreyling/light-service)
 
 A service object framework heavily, heavily, heavily inspired by the [LightService](https://github.com/adomokos/light-service) Ruby gem.
 
