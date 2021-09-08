@@ -1,6 +1,6 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class Alias extends Action {
+module.exports = class Alias extends Action {
   expects = ["num"];
   promises = ["num"];
 
@@ -11,4 +11,4 @@ export default class Alias extends Action {
   rolledBack({ num }) {
     this.context.num = num - 1;
   }
-}
+};

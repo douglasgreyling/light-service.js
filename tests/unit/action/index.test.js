@@ -1,4 +1,4 @@
-import Valid from "../../fixtures/actions/Valid.js";
+const Valid = require("../../fixtures/actions/Valid.js");
 
 test("executes valids actions", async () => {
   const result = await Valid.execute({ number: 1 });

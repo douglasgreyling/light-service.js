@@ -1,15 +1,15 @@
-import SkipActionError from "./errors/SkipActionError.js";
-import RollbackError from "./errors/RollbackError.js";
+const SkipActionError = require("./errors/SkipActionError.js");
+const RollbackError = require("./errors/RollbackError.js");
 
-export const CLEANABLE_ACTION_CONTEXT_KEYS = ["__skipAction", "__rollback"];
-export const CLEANABLE_ORGANIZER_CONTEXT_KEYS = [
+const CLEANABLE_ACTION_CONTEXT_KEYS = ["__skipAction", "__rollback"];
+const CLEANABLE_ORGANIZER_CONTEXT_KEYS = [
   "__skipRemaining",
   "__rollback",
   "__currentOrganizer",
   "__currentAction",
 ];
 
-export default class Context {
+class Context {
   constructor(args) {
     this.__success = true;
     Object.assign(this, args);
@@ -107,4 +107,10 @@ export default class Context {
       },
     });
   }
+}
+
+module.exports = {
+  CLEANABLE_ACTION_CONTEXT_KEYS,
+  CLEANABLE_ORGANIZER_CONTEXT_KEYS,
+  Context
 }

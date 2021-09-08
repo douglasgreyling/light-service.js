@@ -1,21 +1,21 @@
 {
   "name": "@douglasgreyling/light-service",
-  "version": "1.0.3",
+  "version": "1.1.3",
   "description": "A service object framework for JavaScript",
   "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "dependencies": {
-    "p-each-series": "^3.0.0",
-    "p-pipe": "^4.0.0"
+    "p-each-series": "^2.2.0",
+    "p-pipe": "^3.1.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^27.1.0"
   },
   "scripts": {
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "jest"
   },
   "author": "",
   "license": "MIT",
@@ -27,7 +27,6 @@
     "url": "https://github.com/douglasgreyling/light-service.js/issues"
   },
   "homepage": "https://github.com/douglasgreyling/light-service.js#readme",
-  "type": "module",
   "keywords": [
     "service",
     "services",

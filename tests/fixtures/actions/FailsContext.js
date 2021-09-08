@@ -1,6 +1,6 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class FailsContext extends Action {
+module.exports = class FailsContext extends Action {
   expects = ["number"];
   promises = ["number"];
 

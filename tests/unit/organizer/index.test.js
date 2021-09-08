@@ -1,16 +1,16 @@
-import Valid from "../../fixtures/organizers/Valid.js";
-import SkipActions from "../../fixtures/organizers/SkipActions.js";
-import FailContext from "../../fixtures/organizers/FailContext.js";
-import FailContextAndReturns from "../../fixtures/organizers/FailContextAndReturns.js";
-import SkipRemaining from "../../fixtures/organizers/SkipRemaining.js";
-import Rollback from "../../fixtures/organizers/Rollback.js";
-import RollbackWithNoHandler from "../../fixtures/organizers/RollbackWithNoHandler.js";
-import OrganizerMetadata from "../../fixtures/organizers/OrganizerMetadata.js";
-import Alias from "../../fixtures/organizers/Alias.js";
-import AroundHooks from "../../fixtures/organizers/AroundHooks.js";
-import BeforeHooks from "../../fixtures/organizers/BeforeHooks.js";
-import AfterHooks from "../../fixtures/organizers/AfterHooks.js";
-import AllHooks from "../../fixtures/organizers/AllHooks.js";
+const Valid = require("../../fixtures/organizers/Valid.js");
+const SkipActions = require("../../fixtures/organizers/SkipActions.js");
+const FailContext = require("../../fixtures/organizers/FailContext.js");
+const FailContextAndReturns = require("../../fixtures/organizers/FailContextAndReturns.js");
+const SkipRemaining = require("../../fixtures/organizers/SkipRemaining.js");
+const Rollback = require("../../fixtures/organizers/Rollback.js");
+const RollbackWithNoHandler = require("../../fixtures/organizers/RollbackWithNoHandler.js");
+const OrganizerMetadata = require("../../fixtures/organizers/OrganizerMetadata.js");
+const Alias = require("../../fixtures/organizers/Alias.js");
+const AroundHooks = require("../../fixtures/organizers/AroundHooks.js");
+const BeforeHooks = require("../../fixtures/organizers/BeforeHooks.js");
+const AfterHooks = require("../../fixtures/organizers/AfterHooks.js");
+const AllHooks = require("../../fixtures/organizers/AllHooks.js");
 
 test("executes valids actions", async () => {
   const result = await Valid.call(1);

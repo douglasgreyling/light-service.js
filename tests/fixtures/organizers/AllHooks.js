@@ -1,8 +1,7 @@
-import Organizer from "../../../src/Organizer.js";
+const Organizer = require("../../../src/Organizer.js");
+const Hooks = require("../actions/Hooks.js");
 
-import Hooks from "../actions/Hooks.js";
-
-export default class AllHooks extends Organizer {
+module.exports = class AllHooks extends Organizer {
   aroundEach(context) {
     context.order.push("around");
   }

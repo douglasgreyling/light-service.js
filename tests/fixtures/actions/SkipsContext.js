@@ -1,6 +1,6 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class SkipsContext extends Action {
+module.exports = class SkipsContext extends Action {
   expects = ["number"];
   promises = ["number"];
 

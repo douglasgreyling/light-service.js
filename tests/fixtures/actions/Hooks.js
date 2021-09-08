@@ -1,6 +1,6 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class Hooks extends Action {
+module.exports = class Hooks extends Action {
   expects = ["order"];
   promises = ["order"];
 

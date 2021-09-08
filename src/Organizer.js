@@ -1,6 +1,6 @@
-import pPipe from "p-pipe";
+const pPipe = require("p-pipe");
 
-export default class Organizer {
+module.exports = class Organizer {
   static with(context = {}) {
     return new this(context);
   }

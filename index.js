@@ -1,4 +1,4 @@
-import Action from "./src/Action.js";
-import Organizer from "./src/Organizer.js";
+const Action = require("./src/Action.js");
+const Organizer = require("./src/Organizer.js");
 
-export { Action, Organizer };
+module.exports = { Action, Organizer };

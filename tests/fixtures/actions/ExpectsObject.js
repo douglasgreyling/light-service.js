@@ -1,10 +1,10 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class ExpectsObject extends Action {
+module.exports = class ExpectsObject extends Action {
   expects = { fields: ["number"] };
   promises = ["number"];
 
   executed({ number }) {
     this.context.number = number + 1;
   }
-}
+};

@@ -1,9 +1,8 @@
-import Organizer from "../../../src/Organizer.js";
+const Organizer = require("../../../src/Organizer.js");
+const AddsOne = require("../actions/Valid.js");
+const FailsContextAndReturns = require("../actions/FailsContextAndReturns.js");
 
-import AddsOne from "../actions/Valid.js";
-import FailsContextAndReturns from "../actions/FailsContextAndReturns.js";
-
-export default class FailContext extends Organizer {
+module.exports = class FailContext extends Organizer {
   static call(number) {
     return this.with({ number }).reduce(
       AddsOne,

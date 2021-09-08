@@ -1,10 +1,10 @@
-import Context from "../../../src/Context.js";
-import {
+const {
   CLEANABLE_ACTION_CONTEXT_KEYS,
   CLEANABLE_ORGANIZER_CONTEXT_KEYS,
-} from "../../../src/Context.js";
-import SkipActionError from "../../../src/errors/SkipActionError.js";
-import RollbackError from "../../../src/errors/RollbackError.js";
+  Context
+} = require("../../../src/Context.js");
+const SkipActionError = require("../../../src/errors/SkipActionError.js");
+const RollbackError = require("../../../src/errors/RollbackError.js");
 
 test("sets properties on initialization", () => {
   const context = new Context({ foo: 1, bar: 2 });

@@ -1,4 +1,4 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
 function resolveAfter1Second(value, duration = 5) {
   return new Promise((resolve) => {
@@ -8,7 +8,7 @@ function resolveAfter1Second(value, duration = 5) {
   });
 }
 
-export default class ExpectsObjectWithDefaultFunction extends Action {
+module.exports = class ExpectsObjectWithDefaultFunction extends Action {
   expects = {
     fields: ["number"],
     defaults: { number: async () => resolveAfter1Second(1) },

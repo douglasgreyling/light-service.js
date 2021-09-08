@@ -1,13 +1,13 @@
-import pEachSeries from "p-each-series";
+const pEachSeries = require("p-each-series");
 
-import Context from "./Context.js";
-import ActionExecutionStep from "./ActionExecutionStep.js";
-import ActionRollbackStep from "./ActionRollbackStep.js";
-import ExpectedKeysNotInContextError from "./errors/ExpectedKeysNotInContextError.js";
-import PromisedKeysNotInContextError from "./errors/PromisedKeysNotInContextError.js";
-import RollbackError from "./errors/RollbackError.js";
+const { Context } = require("./Context.js");
+const ActionExecutionStep = require("./ActionExecutionStep.js");
+const ActionRollbackStep = require("./ActionRollbackStep.js");
+const ExpectedKeysNotInContextError = require("./errors/ExpectedKeysNotInContextError.js");
+const PromisedKeysNotInContextError = require("./errors/PromisedKeysNotInContextError.js");
+const RollbackError = require("./errors/RollbackError.js");
 
-export default class Action {
+module.exports = class Action {
   static async execute(context = {}, opts = {}) {
     const action = new this(context, opts);
 
@@ -147,4 +147,4 @@ export default class Action {
     if (0 < missingPromises.length)
       throw new PromisedKeysNotInContextError(missingPromises);
   }
-}
+};

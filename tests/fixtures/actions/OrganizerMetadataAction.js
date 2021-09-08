@@ -1,6 +1,6 @@
-import Action from "../../../src/Action.js";
+const Action = require("../../../src/Action.js");
 
-export default class OrganizerMetadataAction extends Action {
+module.exports = class OrganizerMetadataAction extends Action {
   executed() {
     this.context.organizer = this.context.currentOrganizer();
     this.context.action = this.context.currentAction();

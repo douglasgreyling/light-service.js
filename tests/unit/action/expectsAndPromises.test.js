@@ -1,9 +1,9 @@
-import Valid from "../../fixtures/actions/Valid.js";
-import MissingPromise from "../../fixtures/actions/MissingPromise.js";
-import ExpectsObject from "../../fixtures/actions/ExpectsObject.js";
-import ExpectsObjectWithDefaultLiteral from "../../fixtures/actions/ExpectsObjectWithDefaultLiteral.js";
-import ExpectsObjectWithDefaultFunction from "../../fixtures/actions/ExpectsObjectWithDefaultFunction.js";
-import ExpectsObjectWithMissingDefault from "../../fixtures/actions/ExpectsObjectWithMissingDefault.js";
+const Valid = require("../../fixtures/actions/Valid.js");
+const MissingPromise = require("../../fixtures/actions/MissingPromise.js");
+const ExpectsObject = require("../../fixtures/actions/ExpectsObject.js");
+const ExpectsObjectWithDefaultLiteral = require("../../fixtures/actions/ExpectsObjectWithDefaultLiteral.js");
+const ExpectsObjectWithDefaultFunction = require("../../fixtures/actions/ExpectsObjectWithDefaultFunction.js");
+const ExpectsObjectWithMissingDefault = require("../../fixtures/actions/ExpectsObjectWithMissingDefault.js");
 
 test("detects missing expectations", async () => {
   await expect(Valid.execute()).rejects.toThrow(

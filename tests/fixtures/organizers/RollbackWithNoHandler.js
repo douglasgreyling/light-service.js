@@ -1,9 +1,8 @@
-import Organizer from "../../../src/Organizer.js";
+const Organizer = require("../../../src/Organizer.js");
+const AddsOne = require("../actions/Valid.js");
+const FailsContextAndRollsbackWithNoHandler = require("../actions/FailsContextAndRollsbackWithNoHandler.js");
 
-import AddsOne from "../actions/Valid.js";
-import FailsContextAndRollsbackWithNoHandler from "../actions/FailsContextAndRollsbackWithNoHandler.js";
-
-export default class RollbackWithNoHandler extends Organizer {
+module.exports = class RollbackWithNoHandler extends Organizer {
   static call(number) {
     return this.with({ number }).reduce(
       AddsOne,

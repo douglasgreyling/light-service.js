@@ -1,8 +1,7 @@
-import Organizer from "../../../src/Organizer.js";
+const Organizer = require("../../../src/Organizer.js");
+const Hooks = require("../actions/Hooks.js");
 
-import Hooks from "../actions/Hooks.js";
-
-export default class BeforeHooks extends Organizer {
+module.exports = class BeforeHooks extends Organizer {
   beforeEach(context) {
     context.order.push("before");
   }

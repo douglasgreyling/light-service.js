@@ -1,8 +1,7 @@
-import Organizer from "../../../src/Organizer.js";
+const Organizer = require("../../../src/Organizer.js");
+const OrganizerMetadataAction = require("../actions/OrganizerMetadataAction.js");
 
-import OrganizerMetadataAction from "../actions/OrganizerMetadataAction.js";
-
-export default class OrganizerMetadata extends Organizer {
+module.exports = class OrganizerMetadata extends Organizer {
   static call() {
     return this.with({}).reduce(OrganizerMetadataAction);
   }
