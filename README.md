@@ -23,18 +23,21 @@ Be sure to check out the original [LightService](https://github.com/adomokos/lig
   - [The organizer](#the-organizer)
   - [Looking up the tax percentage](#looking-up-the-tax-percentage)
   - [Calculating the order tax](#calculating-the-order-tax)
-  - [Providing free shipping (where applicable)](<#providing-free-shipping-(where-applicable)>)
+  - [Providing free shipping (where applicable)](#providing-free-shipping-where-applicable)
   - [And finally, the controller](#and-finally-the-controller)
 - [Caveats](#caveats)
-- [Tips & Tricks](#tips-&-tricks)
+- [Tips & Tricks](#tips--tricks)
   - [Stopping a series of actions](#stopping-a-series-of-actions)
   - [Hooks](#hooks)
   - [Expects and promises](#expects-and-promises)
-  - [Context metadata](#context-metadata)
+  - [Context](#context)
   - [Key aliases](#key-aliases)
-  - [Logging](#logging)
   - [Error codes](#error-codes)
   - [Action rollback](#action-rollback)
+- [Development](#development)
+  - [Linting and formatting](#linting-and-formatting)
+  - [Auditing dependencies](#auditing-dependencies)
+  - [Working without Docker](#working-without-docker)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -61,7 +64,7 @@ class TaxController extends SomeController {
       (context.taxPercentage / 100)
     ).toFixed(2);
 
-    if (200 < order.totalWithTax)
+    if (order.totalWithTax > 200)
       order.provideFreeShipping();
 
     return ...; // Redirect to some view with a flash message
@@ -87,14 +90,14 @@ In the case with our controller above, it would be great if our code dispelled a
 
 If you've ever felt the headache of fat controllers, difficult code to reason about, or seemingly endless rabbit holes, then this is where LightService comes in.
 
-## How LightService works in 60 seconds:
+## How LightService works in 60 seconds
 
 There are 2 key things to know about when working with LightService:
 
 1. Actions.
 2. Organizers.
 
-**Actions** are the building blocks of getting stuff done in LightService. Actions focus on doing one thing really well. They can be executed on their own, but you'll often seem them bundled together with other actions inside Organizers.
+**Actions** are the building blocks of getting stuff done in LightService. Actions focus on doing one thing really well. They can be executed on their own, but you'll often see them bundled together with other actions inside Organizers.
 
 **Organizers** group multiple actions together to complete some task. Organizers consist of at least one action. Organizers execute actions in a set order, one at a time. Organizers use actions to tell you the 'story' of what will happen.
 
@@ -102,7 +105,7 @@ Here's a diagram to understand the relationship between organizers and actions:
 
 ![LightService](resources/lightservice-interaction.png)
 
-## Getting started:
+## Getting started
 
 ### Installation
 
@@ -110,12 +113,29 @@ Here's a diagram to understand the relationship between organizers and actions:
 npm i @douglasgreyling/light-service
 ```
 
-### Your first action:
+The package exports the two classes you build with, plus the `Context` class and
+the errors it throws, so you can identify them with `instanceof`:
+
+```javascript
+const {
+  Action,
+  Organizer,
+  Context,
+  ExpectedKeysNotInContextError,
+  PromisedKeysNotInContextError,
+  RollbackError,
+  SkipActionError,
+  AliasKeyAlreadyInContextError,
+  ReservedContextKeysError,
+} = require("@douglasgreyling/light-service");
+```
+
+### Your first action
 
 Let's make a simple greeting action.
 
 ```javascript
-import { Action } from "light-service";
+import { Action } from "@douglasgreyling/light-service";
 
 class GreetsSomeoneAction extends Action {
   expects = ["name"];
@@ -131,15 +151,14 @@ Actions take an optional list of expected inputs and can return an optional list
 
 The `executed` function is the function which gets called whenever we execute/run our action. We can access the inputs available to this action through the `context` argument. Likewise, we can add/set any outputs through the context as well.
 
-Once an action is run we can access the finished context, and the status of the action.
+Once an action is run we can access the finished context and the status of the action.
 
 ```javascript
 const result = await GreetsSomeoneAction.execute({ name: "Scooby" });
 
-if (result.success())
-  console.log(result.greeting);
+if (result.success()) console.log(result.greeting);
 
-> "Hello, Scooby. Solved any fun mysteries lately?"
+// => "Hello, Scooby. Solved any fun mysteries lately?"
 ```
 
 Actions try to promote simplicity. They either succeed, or they fail, and they have very clear inputs and outputs. They generally focus on doing one thing, and because of that they can be a dream to test!
@@ -148,7 +167,7 @@ Actions try to promote simplicity. They either succeed, or they fail, and they h
 
 Most times a simple action isn't enough. LightService lets you compose a bunch of actions into a single organizer. By bundling your simple actions into an organizer you can stitch very complicated business logic together in a manner that's very easy to reason about. Good organizers tell you a clear story!
 
-Before we create out organizer, let's create one more action:
+Before we create our organizer, let's create one more action:
 
 ```javascript
 class FeedsSomeoneAction extends Action {
@@ -165,20 +184,20 @@ class FeedsSomeoneAction extends Action {
 Now let's create our organizer like this:
 
 ```javascript
-import { Organizer } from "light-service";
+import { Organizer } from "@douglasgreyling/light-service";
 
 class GreetsAndFeedsSomeone extends Organizer {
   static async call(name) {
-    return this.with({ name }).reduce(GreetsSomeoneAction, FeedSomeoneAction);
+    return this.with({ name }).reduce(GreetsSomeoneAction, FeedsSomeoneAction);
   }
 }
 
 const result = await GreetsAndFeedsSomeone.call("Shaggy");
 ```
 
-And that's your first organizer! It ties two actions together through a static function `call`. The organizer call function takes any name and uses it to setup an initial context (this is what the `with` function does). The organizer then executes each of the actions on after another with the `reduce` function.
+And that's your first organizer! It ties two actions together through a static function `call`. The organizer call function takes any name and uses it to set up an initial context (this is what the `with` function does). The organizer then executes each of the actions one after another with the `reduce` function.
 
-As your actions are executed they will add/remove to the context you initially set up.
+As your actions are executed they will add to and remove from the context you initially set up.
 
 Just like actions, organizers return the final context as their return value.
 
@@ -186,15 +205,15 @@ Just like actions, organizers return the final context as their return value.
 const result = await GreetsAndFeedsSomeone.call("Shaggy");
 
 if (result.success()) {
-  console.log('Time to stock up on snacks!');
+  console.log("Time to stock up on snacks!");
 }
 
-> "Time to stock up on snacks!"
+// => "Time to stock up on snacks!"
 ```
 
 Because organizers generally run through complex business logic, and every action has the potential to cause a failure, testing an organizer is functionally equivalent to an integration test.
 
-## Simplifying our first tax example:
+## Simplifying our first tax example
 
 Let's clean up the controller we started with by using LightService.
 
@@ -204,7 +223,7 @@ We'll begin by looking at the controller. We want to look for distinct steps whi
 2. Calculate the order tax.
 3. Provide free shipping if the total with tax is greater than \$200.
 
-#### The organizer:
+#### The organizer
 
 ```javascript
 class CalculatesTax extends Organizer {
@@ -212,13 +231,13 @@ class CalculatesTax extends Organizer {
     return this.with({ order }).reduce(
       LooksUpTaxPercentageAction,
       CalculatesOrderTaxAction,
-      ProvidesFreeShippingAction
+      ProvidesFreeShippingAction,
     );
   }
 }
 ```
 
-#### Looking up the tax percentage:
+#### Looking up the tax percentage
 
 ```javascript
 class LooksUpTaxPercentageAction extends Action {
@@ -239,7 +258,7 @@ class LooksUpTaxPercentageAction extends Action {
     const taxPercentage = taxRanges.forTotal(order.total);
 
     if (taxPercentage === undefined) {
-      context.fail("The tax percentage were not found");
+      context.fail("The tax percentage was not found");
       this.nextContext();
     }
 
@@ -248,7 +267,7 @@ class LooksUpTaxPercentageAction extends Action {
 }
 ```
 
-#### Calculating the order tax:
+#### Calculating the order tax
 
 ```javascript
 class CalculatesOrderTaxAction extends Action {
@@ -263,7 +282,7 @@ class CalculatesOrderTaxAction extends Action {
 }
 ```
 
-#### Providing free shipping (where applicable):
+#### Providing free shipping (where applicable)
 
 ```javascript
 class ProvidesFreeShippingAction extends Action {
@@ -272,14 +291,14 @@ class ProvidesFreeShippingAction extends Action {
   executed(context) {
     const totalWithTax = context.order.totalWithTax();
 
-    if (200 < totalWithTax) {
+    if (totalWithTax > 200) {
       context.order.provideFreeShipping();
     }
   }
 }
 ```
 
-#### And finally, the controller:
+#### And finally, the controller
 
 ```javascript
 class TaxController extends Controller {
@@ -297,28 +316,36 @@ class TaxController extends Controller {
 }
 ```
 
-## Caveats:
+## Caveats
 
-LightService is really useful when you need to put together a series of functions in order create an elegant processing pipeline. Javascript will make this a little more challenging given that it implements asynchronous code.
+LightService is really useful when you need to put together a series of functions in order to create an elegant processing pipeline. JavaScript will make this a little more challenging given that it implements asynchronous code.
 
-This implementation of LightService assumes that asynchronous code is present in your actions & organizers (even if it isn't) in order to sequentially execute action.
+This implementation assumes asynchronous code is present in your actions and organizers (even if it isn't) so that it can execute them one at a time.
 
-Because of this your an actions/organizers will **ALWAYS** return a promise.
+Because of this your actions/organizers will **ALWAYS** return a promise.
 
-## Tips & Tricks:
+## Tips & Tricks
 
 ### Stopping a series of actions
 
 When nothing unexpected happens during the organizer's call, the returned context will be successful. Here is how you can check for this:
+
+```javascript
+const result = await GreetsAndFeedsSomeone.call("Shaggy");
+
+if (result.success()) {
+  // Every action ran to completion.
+}
+```
 
 However, sometimes not everything will play out as you expect it. An external API call might not be available or some complex business logic will need to stop the processing of a series of actions. You have two options to stop the call chain:
 
 1. Failing the context
 2. Skipping the rest of the actions
 
-#### Failing the context:
+#### Failing the context
 
-When something goes wrong in an action and you want to halt the chain, you need to call `fail()` on the context object. This will push the context in a failure state (`context.failure()` will evaluate to true). The context's `fail` function can take an optional message argument, this message might help describe what went wrong. In case you need to return immediately from the point of failure, you have to do that by calling next context.
+When something goes wrong in an action and you want to halt the chain, you need to call `fail()` on the context object. This will push the context into a failure state (`context.failure()` will evaluate to true). The context's `fail` function takes an optional message argument describing what went wrong. To return immediately from the point of failure, call `nextContext()`.
 
 In case you want to fail the context and stop the execution of the executed block, use the `failAndReturn('something went wrong')` function. This will immediately fail the context and cause the execute function to return.
 
@@ -343,27 +370,26 @@ Let's imagine that in the example above the organizer could have called 4 action
 
 #### Skipping the rest of the actions
 
-You can skip the rest of the actions by calling `skipRemaining()` on the context. This behaves very similarly to the above-mentioned fail mechanism, except this will not push the context into a failure state. A good use case for this is executing the first couple of actions and based on a check you might not need to execute the rest. Here is an example of how you do it:
+You can skip the rest of the actions by calling `skipRemaining()` on the context. This behaves very similarly to the above-mentioned fail mechanism, except this will not push the context into a failure state. A good use case is running the first couple of actions and then deciding, based on what they found, that the rest are unnecessary. Here is an example of how you do it:
 
 ```javascript
 class ChecksOrderStatusAction extends Action {
   executed(context) {
     if (context.order.mustSendNotification()) {
-      context.skipRemaining(
-        "Everything is good, no need to execute the rest of the actions"
-      );
+      // Everything is good, no need to execute the rest of the actions.
+      context.skipRemaining();
     }
   }
 }
 ```
 
-Let's imagine that in the example above the organizer called 4 actions. The first 2 actions got executed successfully. The 3rd decided to skip the rest, the 4th action was not invoked. The context was successful.
+Let's imagine that in the example above the organizer called 4 actions. The first 2 actions got executed successfully. The 3rd decided to skip the rest, so the 4th action was not invoked. The context was successful.
 
 ![LightService](resources/skip-remaining.png)
 
 ### Hooks
 
-In case you need to inject code right before, after or even around actions (or even around), then hooks could be the droid you're looking for. This addition to LightService is a great way to decouple instrumentation from business logic.
+In case you need to inject code right before, after or even around actions, then hooks could be the droid you're looking for. Hooks are a great way to decouple instrumentation from business logic.
 
 Consider this code:
 
@@ -390,14 +416,14 @@ class TwoAction extends Action {
 
 The logging logic makes `TwoAction` more complex, there is more code for logging than for business logic.
 
-You have three options to include hooks so you can decouple instrumentation from real logic with `beforeEach`, `afterEach` and `aroundEach` hooks:
+Three hooks are available for this: `beforeEach`, `afterEach` and `aroundEach`.
 
 This is how you can declaratively add before and after hooks to the organizer:
 
 ```javascript
 class SomeOrganizer extends Organizer {
   beforeEach(context) {
-    if (context.currentAction() == TwoAction) {
+    if (context.currentAction() == "TwoAction") {
       if (context.user.role != "admin") return;
 
       context.logger.info("admin is doing something");
@@ -405,7 +431,7 @@ class SomeOrganizer extends Organizer {
   }
 
   afterEach(context) {
-    if (context.currentAction() == TwoAction) {
+    if (context.currentAction() == "TwoAction") {
       if (context.user.role != "admin") return;
 
       context.logger.info("admin is doing something");
@@ -434,9 +460,16 @@ class TwoAction extends Action {
 
 Note how the action has no logging logic after this change. Also, you can target before and after action logic for specific actions, as the `context.currentAction()` will have the class name of the currently processed action. In the example above, logging will occur only for `TwoAction` and not for `OneAction` or `ThreeAction`.
 
+Hooks bracket the actions which actually run. An action skipped by an earlier
+failure or by `skipRemaining()` gets no hooks at all, while an action which
+starts and then fails still gets its closing `afterEach` and `aroundEach` — so
+instrumentation is not lost precisely when something has gone wrong.
+
+Hooks are declared on the organizer, and `this` inside them is the organizer.
+
 ### Expects and promises
 
-The expects and promises functions are rules for the inputs/outputs of an action. `expects` describes what keys it needs to exist inside the context for the action to execute and finish successfully. `promises` makes sure the keys are in the context after the action has been executed. If either of them are violated, a custom exception is thrown.
+The `expects` and `promises` properties are rules for the inputs/outputs of an action. `expects` describes what keys it needs to exist inside the context for the action to execute and finish successfully. `promises` makes sure the keys are in the context after the action has been executed. If either is violated, a custom exception is thrown.
 
 This is how it's used:
 
@@ -464,19 +497,48 @@ class FooAction extends Action {
 }
 ```
 
-The default will only be set if the expected field is undefined within the context.
+The default is only applied when the expected key is missing from the context. A key that is present but set to `undefined` counts as present, and keeps its value.
 
 Acceptable defaults also include functions.
 
 ### Context
 
-The context returned by actions & organizers include some handy helper functions such as the following:
+The context returned by actions and organizers includes some handy helper functions such as the following:
 
 1. The current action (`context.currentAction();`)
 2. The current organizer (`context.currentOrganizer();`)
 3. The failure status of the context (`context.failure();`)
 4. The success status of the context (`context.success();`)
 5. The failure message if it exists (`context.message();`)
+
+#### Reserved context keys
+
+Your data and the context API share one object, so a key named after a context
+function would shadow it. LightService refuses those keys up front with a
+`ReservedContextKeysError` rather than letting the collision surface later:
+
+```javascript
+this.with({ message: "Order created" });
+// => ReservedContextKeysError: The following context keys are reserved by
+//    LightService: message
+```
+
+The reserved names are `success`, `failure`, `message`, `currentOrganizer`,
+`currentAction`, `errorCode`, `shouldRollback`, `fail`, `nextContext`,
+`failAndReturn`, `skipRemaining`, `failWithRollback`, `cleanActionContext`,
+`cleanOrganizerContext`, `registerAliases` and `__mapAlias`. Aliases are checked
+against the same list. Keys beginning with `__` are also used internally, so
+avoid that prefix for your own data.
+
+`currentAction()` and `currentOrganizer()` return class names, which a minifier
+will rewrite. If your code is bundled, declare a stable name and it will be used
+instead:
+
+```javascript
+class GreetsSomeoneAction extends Action {
+  static displayName = "GreetsSomeoneAction";
+}
+```
 
 Also, take advantage of destructuring as much as possible. You can still refer to and mutate the context via `this` like the following:
 
@@ -497,7 +559,7 @@ The `aliases` property allows you to create an alias for a key found inside the 
 
 This allows you to put together existing actions from different sources and have them work together without having to modify their code. Aliases will work with, or without, action expects.
 
-If a key alias is set for a key which already exists inside the context, then an exception is raised.
+If a key alias is set for a key which already holds a value in the context, an `AliasKeyAlreadyInContextError` is raised rather than quietly replacing it.
 
 Say for example you have actions `AnAction` and `AnotherAction` that you've used in previous projects. `AnAction` provides `myKey` but `AnotherAction` needs to use that key but expects it to be called `keyAlias` instead. You can use them together in an organizer like so:
 
@@ -544,12 +606,12 @@ However, you might need to handle the errors coming from your action pipeline di
 ```javascript
 class SomeAction extends Action {
   executed(context) {
-    if (95 < context.teapot.heat())
+    if (context.teapot.heat() < 95)
       context.fail("The teapot is not hot enough", { errorCode: 1234 });
 
     // Make some tea
 
-    if (2 < context.sugar.amount())
+    if (context.sugar.amount() < 2)
       context.fail("There is not enough sugar for the tea", {
         errorCode: 5678,
       });
@@ -563,15 +625,32 @@ If this action were executed, then you can pull the error message like you would
 const result = await SomeAction.execute();
 
 console.log(result.message());
-> "The teapost is not hot enough"
+// => "The teapot is not hot enough"
 
 console.log(result.errorCode());
-> 1234
+// => 1234
+```
+
+Expectation and promise violations throw typed errors, so you can catch a
+specific kind rather than matching on the message:
+
+```javascript
+const {
+  ExpectedKeysNotInContextError,
+} = require("@douglasgreyling/light-service");
+
+try {
+  await SomeAction.execute();
+} catch (err) {
+  if (err instanceof ExpectedKeysNotInContextError) {
+    // A key the action expected was missing from the context.
+  }
+}
 ```
 
 ### Action rollback
 
-Sometimes your action has to undo what it did when an error occurs. Think about a chain of actions where you need to persist records in your data store in one action and you have to call an external service in the next. What happens if there is an error when you call the external service? You want to remove the records you previously saved. You can do it now with the `rolledBack` function.
+Sometimes your action has to undo what it did when an error occurs. Think about a chain of actions where you need to persist records in your data store in one action and you have to call an external service in the next. What happens if there is an error when you call the external service? You want to remove the records you previously saved, which is what the `rolledBack` function is for.
 
 ```javascript
 class SaveEntities extends Action {
@@ -581,7 +660,7 @@ class SaveEntities extends Action {
     context.user.save();
   }
 
-  rolledBack(executed) {
+  rolledBack(context) {
     context.user.destroy();
   }
 }
@@ -603,6 +682,71 @@ class CallSomeExternalAPI extends Action {
 Using the `rolledBack` function is optional for the actions in the chain. You shouldn't care about undoing non-persisted changes.
 
 The actions are rolled back in reversed order from the point of failure starting with the action that triggered it.
+
+## Development
+
+The only requirement is Docker — no local Node or npm install needed.
+
+```bash
+docker compose run --rm test     # run the suite once, with coverage
+docker compose run --rm watch    # re-run the suite on every save
+docker compose run --rm lint     # ESLint
+docker compose run --rm format   # rewrite files with Prettier
+docker compose run --rm dev      # a shell inside the container
+docker compose run --rm ci       # run against a clean checkout, no bind mounts
+```
+
+The first command builds the image; everything after that reuses it. Your
+working tree is mounted live, so edits on the host are picked up immediately and
+`coverage/` is written back to the host.
+
+`node_modules` deliberately lives in a Docker volume rather than on the host, so
+your local platform never leaks into the Linux container (and vice versa). If
+`package-lock.json` changes, the container notices and reinstalls on its next
+start — you don't need to rebuild by hand.
+
+The container runs Node 24 (the active LTS), which is what CI treats as the
+primary version. CI also runs the suite against Node 22 and 26; reproduce either
+locally by overriding `NODE_VERSION`:
+
+```bash
+NODE_VERSION=26 docker compose build
+```
+
+On Linux, build with your own user ids so files created in the container belong
+to you:
+
+```bash
+UID=$(id -u) GID=$(id -g) docker compose build
+```
+
+### Linting and formatting
+
+ESLint handles correctness, Prettier owns formatting, and the two are kept from
+fighting by `eslint-config-prettier`. CI fails on either.
+
+```bash
+npm run lint          # report problems
+npm run lint:fix      # fix what can be fixed automatically
+npm run format        # rewrite files with Prettier
+npm run format:check  # verify formatting without writing (what CI runs)
+```
+
+### Auditing dependencies
+
+```bash
+npm audit
+```
+
+CI runs `npm audit --audit-level=high` on every push and again once a week, so
+newly disclosed advisories surface without waiting for someone to push. The
+package has no runtime dependencies, so this is a supply-chain check on the
+development toolchain rather than on anything shipped to users.
+
+### Working without Docker
+
+`npm install && npm test` works too — the project has no runtime dependencies,
+and the whole development toolchain is Jest, ESLint and Prettier.
 
 ## Contributing
 

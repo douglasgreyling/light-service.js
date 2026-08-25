@@ -7,7 +7,7 @@ module.exports = class Rollback extends Organizer {
     return this.with({ number }).reduce(
       AddsOne,
       AddsOne,
-      FailsContextAndRollsback
+      FailsContextAndRollsback,
     );
   }
-}
+};

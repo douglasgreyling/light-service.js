@@ -8,4 +8,4 @@ module.exports = class AliasOrganizer extends Organizer {
   static call(number) {
     return this.with({ number }).reduce(AddsOne, Alias);
   }
-}
+};

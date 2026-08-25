@@ -8,7 +8,7 @@ module.exports = class FailContext extends Organizer {
       AddsOne,
       FailsContextAndReturns,
       AddsOne,
-      AddsOne
+      AddsOne,
     );
   }
-}
+};

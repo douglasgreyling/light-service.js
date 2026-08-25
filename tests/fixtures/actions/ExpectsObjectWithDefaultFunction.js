@@ -18,4 +18,4 @@ module.exports = class ExpectsObjectWithDefaultFunction extends Action {
   executed({ number }) {
     this.context.number = number + 1;
   }
-}
+};

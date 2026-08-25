@@ -1,5 +1,7 @@
 const SkipActionError = require("./errors/SkipActionError.js");
 const RollbackError = require("./errors/RollbackError.js");
+const AliasKeyAlreadyInContextError = require("./errors/AliasKeyAlreadyInContextError.js");
+const ReservedContextKeysError = require("./errors/ReservedContextKeysError.js");
 
 const CLEANABLE_ACTION_CONTEXT_KEYS = ["__skipAction", "__rollback"];
 const CLEANABLE_ORGANIZER_CONTEXT_KEYS = [
@@ -10,8 +12,11 @@ const CLEANABLE_ORGANIZER_CONTEXT_KEYS = [
 ];
 
 class Context {
-  constructor(args) {
+  constructor(args = {}) {
     this.__success = true;
+
+    assertKeysAreAvailable(Object.keys(args));
+
     Object.assign(this, args);
   }
 
@@ -40,15 +45,15 @@ class Context {
   }
 
   shouldRollback() {
-    return this.currentOrganizer() !== undefined && this.__rollback;
+    return this.currentOrganizer() !== undefined && this.__rollback === true;
   }
 
   fail(message = undefined, { errorCode = undefined } = {}) {
-    if (message) {
+    if (message !== undefined) {
       this.__message = message;
     }
 
-    if (errorCode) {
+    if (errorCode !== undefined) {
       this.__errorCode = errorCode;
     }
 
@@ -96,6 +101,14 @@ class Context {
   // private
 
   __mapAlias(actualKey, aliasKey) {
+    assertKeysAreAvailable([aliasKey]);
+
+    const existing = Object.getOwnPropertyDescriptor(this, aliasKey);
+
+    if (existing && existing.get) return;
+
+    if (existing) throw new AliasKeyAlreadyInContextError(aliasKey);
+
     Object.defineProperty(this, aliasKey, {
       enumerable: true,
       configurable: true,
@@ -109,8 +122,21 @@ class Context {
   }
 }
 
+const RESERVED_CONTEXT_KEYS = new Set(
+  Object.getOwnPropertyNames(Context.prototype).filter(
+    (key) => key !== "constructor",
+  ),
+);
+
+function assertKeysAreAvailable(keys) {
+  const reserved = keys.filter((key) => RESERVED_CONTEXT_KEYS.has(key));
+
+  if (reserved.length > 0) throw new ReservedContextKeysError(reserved);
+}
+
 module.exports = {
   CLEANABLE_ACTION_CONTEXT_KEYS,
   CLEANABLE_ORGANIZER_CONTEXT_KEYS,
-  Context
-}
+  RESERVED_CONTEXT_KEYS,
+  Context,
+};

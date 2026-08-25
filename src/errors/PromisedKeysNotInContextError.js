@@ -3,4 +3,4 @@ module.exports = class PromisedKeysNotInContextError extends Error {
     super();
     this.message = `The following promised keys were not found in the context: ${missingKeys}`;
   }
-}
+};

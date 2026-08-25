@@ -8,4 +8,4 @@ module.exports = class FailsContextAndReturns extends Action {
     this.failAndReturn("some message", { errorCode: 123 });
     this.context.number = number + 1;
   }
-}
+};

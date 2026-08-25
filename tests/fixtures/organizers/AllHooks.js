@@ -17,4 +17,4 @@ module.exports = class AllHooks extends Organizer {
   static call(order) {
     return this.with({ order }).reduce(Hooks);
   }
-}
+};

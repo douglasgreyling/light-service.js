@@ -5,4 +5,4 @@ module.exports = class OrganizerMetadata extends Organizer {
   static call() {
     return this.with({}).reduce(OrganizerMetadataAction);
   }
-}
+};

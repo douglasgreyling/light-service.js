@@ -1,18 +1,26 @@
+const SkipActionError = require("./errors/SkipActionError.js");
+const RollbackError = require("./errors/RollbackError.js");
+
 module.exports = class ActionExecutionStep {
-  static create(action, fn) {
+  static create(action, fn, { isHook = false, marksExecution = false } = {}) {
     return async (context) => {
       try {
-        if (this.shouldExecuteStep(context)) await fn(context);
-      } catch (err) {
-        switch (err.constructor.name) {
-          case "SkipActionError":
-            break;
-          case "RollbackError":
-            if (action.rolledBack) action.rolledBack(context);
-            break;
-          default:
-            throw err;
+        if (isHook ? action.__ran : this.shouldExecuteStep(context)) {
+          if (marksExecution) action.__executedRan = true;
+
+          await fn(context);
         }
+      } catch (err) {
+        if (err instanceof SkipActionError) return;
+
+        if (err instanceof RollbackError) {
+          if (action.__executedRan && action.rolledBack)
+            await action.rolledBack(context);
+
+          return;
+        }
+
+        throw err;
       }
     };
   }
@@ -25,4 +33,4 @@ module.exports = class ActionExecutionStep {
       !context.__rollback
     );
   }
-}
+};

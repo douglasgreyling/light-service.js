@@ -12,4 +12,4 @@ module.exports = class FailsContextAndRollsback extends Action {
   rolledBack({ number }) {
     this.context.number = number - 1;
   }
-}
+};

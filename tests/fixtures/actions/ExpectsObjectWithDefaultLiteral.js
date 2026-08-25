@@ -7,4 +7,4 @@ module.exports = class ExpectsObjectWithDefaultLiteral extends Action {
   executed({ number }) {
     this.context.number = number + 1;
   }
-}
+};

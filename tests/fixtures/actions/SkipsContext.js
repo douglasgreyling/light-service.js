@@ -9,4 +9,4 @@ module.exports = class SkipsContext extends Action {
     this.nextContext();
     this.context.number = number + 1;
   }
-}
+};

@@ -1,0 +1,56 @@
+name: light-service-js
+
+x-dev: &dev
+  build:
+    context: .
+    target: dev
+    args:
+      NODE_VERSION: ${NODE_VERSION:-24}
+      UID: ${UID:-1000}
+      GID: ${GID:-1000}
+  image: light-service-js:dev
+  init: true
+  working_dir: /app
+  volumes:
+    - .:/app
+    - node_modules:/app/node_modules
+    - npm_cache:/home/node/.npm
+
+services:
+  dev:
+    <<: *dev
+    command: bash
+    stdin_open: true
+    tty: true
+
+  test:
+    <<: *dev
+    command: npm test
+
+  watch:
+    <<: *dev
+    command: npm run test:watch
+    stdin_open: true
+    tty: true
+
+  lint:
+    <<: *dev
+    command: npm run lint
+
+  format:
+    <<: *dev
+    command: npm run format
+
+  ci:
+    build:
+      context: .
+      target: ci
+      args:
+        NODE_VERSION: ${NODE_VERSION:-24}
+    image: light-service-js:ci
+    command: npm test
+    init: true
+
+volumes:
+  node_modules:
+  npm_cache:

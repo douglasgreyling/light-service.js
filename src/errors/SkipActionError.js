@@ -1,1 +1,1 @@
-module.exports = class SkipActionError extends Error {}
+module.exports = class SkipActionError extends Error {};
