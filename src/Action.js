@@ -1,8 +1,7 @@
-const pEachSeries = require("p-each-series");
+const eachSeries = require("./utils/eachSeries.js");
 
 const { Context } = require("./Context.js");
 const ActionExecutionStep = require("./ActionExecutionStep.js");
-const ActionRollbackStep = require("./ActionRollbackStep.js");
 const ExpectedKeysNotInContextError = require("./errors/ExpectedKeysNotInContextError.js");
 const PromisedKeysNotInContextError = require("./errors/PromisedKeysNotInContextError.js");
 const RollbackError = require("./errors/RollbackError.js");
@@ -13,7 +12,9 @@ module.exports = class Action {
 
     const steps = this.__generateExecuteSteps(action);
 
-    await pEachSeries(steps, async (step) => step(action.context));
+    action.__ran = ActionExecutionStep.shouldExecuteStep(action.context);
+
+    await eachSeries(steps, async (step) => step(action.context));
 
     if (action.shouldRollback()) this.__triggerOrganizerRollback(action);
 
@@ -21,20 +22,23 @@ module.exports = class Action {
   }
 
   static async rollBack(context = {}, aliases = {}) {
-    const action = new this(context, aliases);
+    const action = new this(context, { aliases });
 
     const steps = this.__generateRollbackSteps(action);
 
-    await pEachSeries(steps, async (step) => step(action.context));
+    await eachSeries(steps, async (step) => step(action.context));
 
     return action.cleanContext();
   }
 
-  constructor(context = {}, { aliases = {}, hooks = {} }) {
+  constructor(context = {}, { aliases = {}, hooks = {} } = {}) {
     this.context = this.__buildContext(context);
     this.expects = [];
     this.promises = [];
     this.hooks = hooks;
+
+    this.__ran = false;
+    this.__executedRan = false;
 
     this.context.registerAliases(aliases);
   }
@@ -71,34 +75,35 @@ module.exports = class Action {
 
   static __generateExecuteSteps(action) {
     let steps = [
-      action.__setDefaultExpectations,
-      action.__checkExpectations,
-      action.executed,
-      action.__checkPromises,
+      { fn: action.__setDefaultExpectations },
+      { fn: action.__checkExpectations },
+      { fn: action.executed, marksExecution: true },
+      { fn: action.__checkPromises },
     ];
 
     this.__setHooks(steps, action);
 
-    return steps.map((s) => ActionExecutionStep.create(action, s.bind(action)));
+    return steps.map(({ fn, ...opts }) =>
+      ActionExecutionStep.create(action, fn.bind(action), opts),
+    );
   }
 
   static __setHooks(steps, { hooks = {} }) {
-    if (hooks.beforeEach) steps.splice(1, 0, hooks.beforeEach);
+    if (hooks.beforeEach)
+      steps.splice(1, 0, { fn: hooks.beforeEach, isHook: true });
 
-    if (hooks.afterEach) steps.push(hooks.afterEach);
+    if (hooks.afterEach) steps.push({ fn: hooks.afterEach, isHook: true });
 
     if (hooks.aroundEach) {
-      steps.splice(1, 0, hooks.aroundEach);
-      steps.push(hooks.aroundEach);
+      steps.splice(1, 0, { fn: hooks.aroundEach, isHook: true });
+      steps.push({ fn: hooks.aroundEach, isHook: true });
     }
   }
 
   static __generateRollbackSteps(action) {
-    let steps = [];
+    if (!action.rolledBack) return [];
 
-    if (action.rolledBack) steps.push(action.rolledBack.bind(action));
-
-    return steps.map((s) => ActionRollbackStep.create(s.bind(action)));
+    return [action.rolledBack.bind(action)];
   }
 
   static __triggerOrganizerRollback(action) {
@@ -106,45 +111,40 @@ module.exports = class Action {
   }
 
   __buildContext(context) {
-    return context.constructor.name == "Context"
-      ? context
-      : new Context(context);
+    return context instanceof Context ? context : new Context(context);
   }
 
   async __setDefaultExpectations() {
-    if (this.expects.constructor.name == "Array") return;
+    if (Array.isArray(this.expects)) return;
 
-    const fields = this.expects.fields;
-    const defaults = Object.entries(this.expects.defaults || {});
+    const { fields, defaults = {} } = this.expects;
 
-    await pEachSeries(defaults, async ([dfName, dValue]) => {
-      if (fields.includes(dfName) && dfName in this.context === false) {
-        if (typeof dValue === "function") {
-          dValue = await dValue(this.context);
-        }
+    if (!Array.isArray(fields))
+      throw new Error(
+        "expects must be an array of keys, or an object with a fields array",
+      );
 
-        this.context[dfName] = dValue;
-      }
+    await eachSeries(Object.entries(defaults), async ([name, value]) => {
+      if (!fields.includes(name) || name in this.context) return;
+
+      this.context[name] =
+        typeof value === "function" ? await value(this.context) : value;
     });
 
     this.expects = fields;
   }
 
   __checkExpectations() {
-    const missingExpectations = this.expects.filter(
-      (expect) => expect in this.context === false
-    );
-
-    if (0 < missingExpectations.length)
-      throw new ExpectedKeysNotInContextError(missingExpectations);
+    this.__checkContextFor(this.expects, ExpectedKeysNotInContextError);
   }
 
   __checkPromises() {
-    const missingPromises = this.promises.filter(
-      (promise) => promise in this.context === false
-    );
+    this.__checkContextFor(this.promises, PromisedKeysNotInContextError);
+  }
 
-    if (0 < missingPromises.length)
-      throw new PromisedKeysNotInContextError(missingPromises);
+  __checkContextFor(keys, MissingKeysError) {
+    const missing = keys.filter((key) => key in this.context === false);
+
+    if (missing.length > 0) throw new MissingKeysError(missing);
   }
 };

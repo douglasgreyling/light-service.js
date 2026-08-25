@@ -5,4 +5,4 @@ module.exports = class OrganizerMetadataAction extends Action {
     this.context.organizer = this.context.currentOrganizer();
     this.context.action = this.context.currentAction();
   }
-}
+};

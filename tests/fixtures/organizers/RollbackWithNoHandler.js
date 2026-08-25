@@ -7,7 +7,7 @@ module.exports = class RollbackWithNoHandler extends Organizer {
     return this.with({ number }).reduce(
       AddsOne,
       AddsOne,
-      FailsContextAndRollsbackWithNoHandler
+      FailsContextAndRollsbackWithNoHandler,
     );
   }
-}
+};

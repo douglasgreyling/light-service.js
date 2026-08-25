@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+coverage
+resources
+*.log
+.DS_Store
+Dockerfile
+compose.yaml
+.dockerignore

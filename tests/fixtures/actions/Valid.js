@@ -11,4 +11,4 @@ module.exports = class Valid extends Action {
   rolledBack({ number }) {
     this.context.number = number - 1;
   }
-}
+};

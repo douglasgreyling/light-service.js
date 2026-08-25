@@ -7,4 +7,4 @@ module.exports = class Hooks extends Action {
   executed() {
     this.context.order.push("executed");
   }
-}
+};

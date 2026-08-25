@@ -8,4 +8,4 @@ module.exports = class SkipRemaining extends Action {
     this.context.number = number + 1;
     this.skipRemaining();
   }
-}
+};

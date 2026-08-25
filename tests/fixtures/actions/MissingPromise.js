@@ -8,4 +8,4 @@ module.exports = class MissingPromise extends Action {
     delete this.context.number;
     this.context.newNumber = number + 1;
   }
-}
+};

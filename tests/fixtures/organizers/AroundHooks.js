@@ -9,4 +9,4 @@ module.exports = class AroundHooks extends Organizer {
   static call(order) {
     return this.with({ order }).reduce(Hooks);
   }
-}
+};

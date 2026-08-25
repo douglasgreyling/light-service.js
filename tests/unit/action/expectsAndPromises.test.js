@@ -7,13 +7,13 @@ const ExpectsObjectWithMissingDefault = require("../../fixtures/actions/ExpectsO
 
 test("detects missing expectations", async () => {
   await expect(Valid.execute()).rejects.toThrow(
-    "The following expected keys were not found in the context: number"
+    "The following expected keys were not found in the context: number",
   );
 });
 
 test("detects missing promises", async () => {
   await expect(MissingPromise.execute({ number: 1 })).rejects.toThrow(
-    "The following promised keys were not found in the context: number"
+    "The following promised keys were not found in the context: number",
   );
 });
 
@@ -37,6 +37,14 @@ test("detects functions as expected field defaults when expects is an object", a
 
 test("ignores expected field defaults when expects is an object and fields do not exist inside the context", async () => {
   await expect(ExpectsObjectWithMissingDefault.execute()).rejects.toThrow(
-    "The following expected keys were not found in the context: number"
+    "The following expected keys were not found in the context: number",
+  );
+});
+
+test("explains an expects object which is missing its fields", async () => {
+  const ExpectsObjectWithoutFields = require("../../fixtures/actions/ExpectsObjectWithoutFields.js");
+
+  await expect(ExpectsObjectWithoutFields.execute({})).rejects.toThrow(
+    "expects must be an array of keys, or an object with a fields array",
   );
 });

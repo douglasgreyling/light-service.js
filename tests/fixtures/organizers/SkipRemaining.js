@@ -6,4 +6,4 @@ module.exports = class SkipRemaining extends Organizer {
   static call(number) {
     return this.with({ number }).reduce(AddsOne, SkipRemainingAction, AddsOne);
   }
-}
+};
